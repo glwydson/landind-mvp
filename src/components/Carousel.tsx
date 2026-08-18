@@ -36,11 +36,12 @@ const TOTAL = slides.length;
 /** [clone último, ...slides, clone primeiro] para loop infinito com slide */
 const trackSlides: Slide[] = [slides[TOTAL - 1], ...slides, slides[0]];
 
-const AUTO_PLAY_MS = 4800;
-const SLIDE_MS = 680;
+const AUTO_PLAY_MS = 6500;
+const SLIDE_MS = 1100;
 const SWIPE_RATIO = 0.18;
 const SWIPE_VELOCITY = 0.28;
-const EASE = "cubic-bezier(0.22, 0.82, 0.24, 1)";
+const EASE = "cubic-bezier(0.33, 0.08, 0.18, 1)";
+
 
 export function Carousel() {
   /** posição no track estendido (1 = primeiro slide real) */
