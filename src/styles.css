@@ -400,6 +400,12 @@ img {
   transition: transform 1.1s cubic-bezier(0.33, 0.08, 0.18, 1);
 }
 
+@media (max-width: 719px), (pointer: coarse) {
+  .carousel__media img {
+    transition-duration: 1.7s;
+  }
+}
+
 .carousel__slide[data-active="true"] .carousel__media img {
   transform: scale(1);
 }

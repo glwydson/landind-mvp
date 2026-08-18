@@ -37,11 +37,31 @@ const TOTAL = slides.length;
 const trackSlides: Slide[] = [slides[TOTAL - 1], ...slides, slides[0]];
 
 const AUTO_PLAY_MS = 6500;
-const SLIDE_MS = 1100;
+const SLIDE_MS_DESKTOP = 1100;
+const SLIDE_MS_MOBILE = 1700;
 const SWIPE_RATIO = 0.18;
 const SWIPE_VELOCITY = 0.28;
 const EASE = "cubic-bezier(0.33, 0.08, 0.18, 1)";
 
+function useSlideDurationMs() {
+  const [ms, setMs] = useState(() => {
+    if (typeof window === "undefined") return SLIDE_MS_DESKTOP;
+    return window.matchMedia("(max-width: 719px), (pointer: coarse)").matches
+      ? SLIDE_MS_MOBILE
+      : SLIDE_MS_DESKTOP;
+  });
+
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 719px), (pointer: coarse)");
+    const update = () =>
+      setMs(query.matches ? SLIDE_MS_MOBILE : SLIDE_MS_DESKTOP);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return ms;
+}
 
 export function Carousel() {
   /** posição no track estendido (1 = primeiro slide real) */
@@ -51,6 +71,8 @@ export function Carousel() {
   const [animating, setAnimating] = useState(false);
   const [noTransition, setNoTransition] = useState(false);
   const [paused, setPaused] = useState(false);
+  const slideMs = useSlideDurationMs();
+
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const pointerIdRef = useRef<number | null>(null);
@@ -221,9 +243,7 @@ export function Carousel() {
   const trackStyle: CSSProperties = {
     transform: `translate3d(calc(${-pos * 100}% + ${offset}px), 0, 0)`,
     transition:
-      dragging || noTransition
-        ? "none"
-        : `transform ${SLIDE_MS}ms ${EASE}`,
+      dragging || noTransition ? "none" : `transform ${slideMs}ms ${EASE}`,
   };
 
   return (
