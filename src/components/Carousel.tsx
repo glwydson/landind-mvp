@@ -37,7 +37,7 @@ const TOTAL = slides.length;
 const trackSlides: Slide[] = [slides[TOTAL - 1], ...slides, slides[0]];
 
 const AUTO_PLAY_MS = 6500;
-const SLIDE_MS_DESKTOP = 1100;
+const SLIDE_MS_DESKTOP = 1700;
 const SLIDE_MS_MOBILE = 1700;
 const SWIPE_RATIO = 0.18;
 const SWIPE_VELOCITY = 0.28;
