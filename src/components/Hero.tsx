@@ -3,13 +3,13 @@ export function Hero() {
     <section className="hero">
       <div
         className="hero__bg"
-        style={{ backgroundImage: 'url("autismo.jpg")' }}
+        style={{ backgroundImage: 'url("img1.jpg")' }}
         aria-hidden="true"
       />
       <div className="hero__overlay">
         <div className="container hero__grid">
           <div className="hero__media">
-            <img src="muie.png" alt="Lorem ipsum dolor sit amet" className="hero__image" />
+            <img src="img5.png" alt="Lorem ipsum dolor sit amet" className="hero__image" />
           </div>
           <div className="hero__copy">
             <p className="eyebrow">Lorem ipsum dolor</p>

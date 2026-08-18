@@ -45,7 +45,7 @@ export function About() {
     <main className="about">
       <div className="container about__grid">
         <aside className="about__media">
-          <img src="avatar.svg" alt="Lorem ipsum dolor" className="about__avatar" />
+          <img src="img6.svg" alt="Lorem ipsum dolor" className="about__avatar" />
         </aside>
 
         <section className="about__content">

@@ -8,17 +8,17 @@ type Slide = {
 
 const slides: Slide[] = [
   {
-    image: "carousel-1.jpg",
+    image: "img2.jpg",
     title: "Lorem ipsum",
     description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
   },
   {
-    image: "carousel-2.jpg",
+    image: "img3.jpg",
     title: "Dolor sit amet",
     description: "Sed do eiusmod tempor incididunt ut labore et dolore magna.",
   },
   {
-    image: "carousel-3.jpg",
+    image: "img4.jpg",
     title: "Consectetur",
     description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco.",
   },
