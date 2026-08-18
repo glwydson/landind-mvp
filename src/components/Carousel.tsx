@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type TouchEvent,
+} from "react";
+
 
 type Slide = {
   image: string;
@@ -25,9 +32,13 @@ const slides: Slide[] = [
 ];
 
 const AUTO_PLAY_MS = 4000;
+const SWIPE_THRESHOLD = 48;
 
 export function Carousel() {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchDeltaX = useRef(0);
 
   const goTo = useCallback((next: number) => {
     setIndex(((next % slides.length) + slides.length) % slides.length);
@@ -37,11 +48,37 @@ export function Carousel() {
   const prev = useCallback(() => goTo(index - 1), [index, goTo]);
 
   useEffect(() => {
+    if (paused) return;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % slides.length);
     }, AUTO_PLAY_MS);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [paused, index]);
+
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+    touchDeltaX.current = 0;
+    setPaused(true);
+  };
+
+  const onTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null) return;
+    const x = event.changedTouches[0]?.clientX ?? touchStartX.current;
+    touchDeltaX.current = x - touchStartX.current;
+  };
+
+  const onTouchEnd = () => {
+    const delta = touchDeltaX.current;
+    touchStartX.current = null;
+    touchDeltaX.current = 0;
+
+    if (Math.abs(delta) >= SWIPE_THRESHOLD) {
+      if (delta < 0) next();
+      else prev();
+    }
+
+    window.setTimeout(() => setPaused(false), 1200);
+  };
 
   return (
     <section id="carrossel" className="section">
@@ -51,7 +88,13 @@ export function Carousel() {
           <p>Sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
         </div>
 
-        <div className="carousel">
+        <div
+          className="carousel"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={onTouchEnd}
+        >
           <button
             type="button"
             className="carousel__arrow carousel__arrow--prev"
@@ -70,7 +113,7 @@ export function Carousel() {
                 aria-hidden={i !== index}
               >
                 <div className="carousel__media">
-                  <img src={slide.image} alt={slide.title} />
+                  <img src={slide.image} alt={slide.title} draggable={false} />
                 </div>
                 <div className="carousel__body">
                   <h3>{slide.title}</h3>
@@ -101,6 +144,8 @@ export function Carousel() {
               />
             ))}
           </div>
+
+          <p className="carousel__hint">Deslize para ver mais</p>
         </div>
       </div>
     </section>
