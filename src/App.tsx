@@ -37,18 +37,7 @@ export function App() {
             <NavLink to="/quem-sou" onClick={() => setMenuOpen(false)}>
               Quem Sou Eu?
             </NavLink>
-            <NavLink
-              className="btn btn--small nav__cta"
-              to="/quem-sou"
-              onClick={() => setMenuOpen(false)}
-            >
-              Saiba mais
-            </NavLink>
           </nav>
-
-          <NavLink className="btn btn--small topbar__cta" to="/quem-sou">
-            Saiba mais
-          </NavLink>
 
           <button
             type="button"

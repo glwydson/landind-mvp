@@ -179,16 +179,6 @@ img {
   font-weight: 600;
 }
 
-.nav__cta {
-  margin-top: 0.35rem;
-  justify-self: stretch;
-  text-align: center;
-}
-
-.topbar__cta {
-  display: none;
-}
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -741,7 +731,6 @@ input[type="file"] {
 
   .nav-toggle,
   .nav-backdrop,
-  .nav__cta,
   .carousel__hint {
     display: none;
   }
@@ -769,10 +758,6 @@ input[type="file"] {
   .nav a:hover {
     background: var(--rainbow);
     color: #fff;
-  }
-
-  .topbar__cta {
-    display: inline-flex;
   }
 
   .hero__overlay {
