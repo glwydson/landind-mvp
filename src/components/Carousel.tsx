@@ -222,7 +222,6 @@ export function Carousel() {
             ))}
           </div>
 
-          <p className="carousel__hint">Deslize para ver mais</p>
         </div>
       </div>
     </section>

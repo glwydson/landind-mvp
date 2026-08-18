@@ -474,14 +474,6 @@ img {
   background: var(--brand);
 }
 
-.carousel__hint {
-  display: block;
-  margin: 0.75rem 0 0;
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
 /* Formulário */
 .section--form {
   padding-bottom: 5rem;
@@ -730,8 +722,7 @@ input[type="file"] {
   }
 
   .nav-toggle,
-  .nav-backdrop,
-  .carousel__hint {
+  .nav-backdrop {
     display: none;
   }
 
