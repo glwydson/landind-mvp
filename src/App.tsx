@@ -26,19 +26,6 @@ export function App() {
             Site Forms
           </NavLink>
 
-          <button
-            type="button"
-            className="nav-toggle"
-            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-            aria-expanded={menuOpen}
-            aria-controls="site-nav"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <span className="nav-toggle__bar" />
-            <span className="nav-toggle__bar" />
-            <span className="nav-toggle__bar" />
-          </button>
-
           <nav
             id="site-nav"
             className={`nav${menuOpen ? " nav--open" : ""}`}
@@ -62,6 +49,19 @@ export function App() {
           <NavLink className="btn btn--small topbar__cta" to="/quem-sou">
             Saiba mais
           </NavLink>
+
+          <button
+            type="button"
+            className="nav-toggle"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            aria-controls="site-nav"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <span className="nav-toggle__bar" />
+            <span className="nav-toggle__bar" />
+            <span className="nav-toggle__bar" />
+          </button>
         </div>
       </header>
 

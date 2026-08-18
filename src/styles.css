@@ -84,6 +84,7 @@ img {
   font-size: 1.1rem;
   color: var(--brand);
   z-index: 2;
+  margin-right: auto;
 }
 
 .nav-toggle {
@@ -93,12 +94,15 @@ img {
   gap: 5px;
   width: 44px;
   height: 44px;
+  margin-left: auto;
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
   cursor: pointer;
-  z-index: 2;
+  z-index: 22;
+  order: 3;
+  flex-shrink: 0;
 }
 
 .nav-toggle__bar {
@@ -352,36 +356,40 @@ img {
 .carousel {
   position: relative;
   background: transparent;
-  touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
 }
 
 .carousel__viewport {
   position: relative;
-  min-height: 380px;
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--bg-elevated);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
+  touch-action: pan-y;
+  cursor: grab;
+  -webkit-user-drag: none;
+}
+
+.carousel__viewport--dragging {
+  cursor: grabbing;
+  touch-action: none;
+}
+
+.carousel__track {
+  display: flex;
+  width: 100%;
+  will-change: transform;
 }
 
 .carousel__slide {
-  position: absolute;
-  inset: 0;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 100%;
   display: grid;
   grid-template-columns: 1fr;
-  opacity: 0;
-  transform: translateX(12px);
-  transition: opacity 0.45s ease, transform 0.45s ease;
-  pointer-events: none;
-}
-
-.carousel__slide[data-active="true"] {
-  opacity: 1;
-  transform: translateX(0);
-  pointer-events: auto;
+  background: var(--bg-elevated);
 }
 
 .carousel__media {
@@ -394,6 +402,7 @@ img {
   height: 100%;
   object-fit: cover;
   pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .carousel__body {
@@ -822,6 +831,8 @@ input[type="file"] {
 
   .carousel__slide {
     grid-template-columns: 1.1fr 0.9fr;
+    min-height: 480px;
+    background: transparent;
   }
 
   .carousel__media {
@@ -868,8 +879,8 @@ input[type="file"] {
     scroll-behavior: auto;
   }
 
-  .carousel__slide,
+  .carousel__track,
   .nav {
-    transition: none;
+    transition: none !important;
   }
 }

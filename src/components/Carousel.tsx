@@ -3,9 +3,9 @@ import {
   useEffect,
   useRef,
   useState,
-  type TouchEvent,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
-
 
 type Slide = {
   image: string;
@@ -31,53 +31,127 @@ const slides: Slide[] = [
   },
 ];
 
-const AUTO_PLAY_MS = 4000;
-const SWIPE_THRESHOLD = 48;
+const AUTO_PLAY_MS = 5000;
+const SWIPE_RATIO = 0.22;
+const SWIPE_VELOCITY = 0.35;
 
 export function Carousel() {
   const [index, setIndex] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
   const [paused, setPaused] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const touchDeltaX = useRef(0);
+
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pointerIdRef = useRef<number | null>(null);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const lastXRef = useRef(0);
+  const lastTRef = useRef(0);
+  const velocityRef = useRef(0);
+  const axisLockRef = useRef<"x" | "y" | null>(null);
+  const widthRef = useRef(0);
+  const indexRef = useRef(0);
+
+  indexRef.current = index;
 
   const goTo = useCallback((next: number) => {
     setIndex(((next % slides.length) + slides.length) % slides.length);
+    setOffset(0);
   }, []);
 
-  const next = useCallback(() => goTo(index + 1), [index, goTo]);
-  const prev = useCallback(() => goTo(index - 1), [index, goTo]);
+  const next = useCallback(() => goTo(indexRef.current + 1), [goTo]);
+  const prev = useCallback(() => goTo(indexRef.current - 1), [goTo]);
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || dragging) return;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % slides.length);
+      setOffset(0);
     }, AUTO_PLAY_MS);
     return () => window.clearInterval(timer);
-  }, [paused, index]);
+  }, [paused, dragging, index]);
 
-  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    touchStartX.current = event.changedTouches[0]?.clientX ?? null;
-    touchDeltaX.current = 0;
+  const measure = () => {
+    widthRef.current = viewportRef.current?.clientWidth ?? 0;
+  };
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+
+    measure();
+    pointerIdRef.current = event.pointerId;
+    startXRef.current = event.clientX;
+    startYRef.current = event.clientY;
+    lastXRef.current = event.clientX;
+    lastTRef.current = event.timeStamp;
+    velocityRef.current = 0;
+    axisLockRef.current = null;
     setPaused(true);
+    setDragging(true);
+
+    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const onTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    if (touchStartX.current === null) return;
-    const x = event.changedTouches[0]?.clientX ?? touchStartX.current;
-    touchDeltaX.current = x - touchStartX.current;
-  };
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (pointerIdRef.current !== event.pointerId) return;
 
-  const onTouchEnd = () => {
-    const delta = touchDeltaX.current;
-    touchStartX.current = null;
-    touchDeltaX.current = 0;
+    const dx = event.clientX - startXRef.current;
+    const dy = event.clientY - startYRef.current;
 
-    if (Math.abs(delta) >= SWIPE_THRESHOLD) {
-      if (delta < 0) next();
-      else prev();
+    if (axisLockRef.current === null) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      axisLockRef.current = Math.abs(dx) >= Math.abs(dy) ? "x" : "y";
+      if (axisLockRef.current === "y") {
+        pointerIdRef.current = null;
+        setDragging(false);
+        setOffset(0);
+        window.setTimeout(() => setPaused(false), 400);
+        return;
+      }
     }
 
-    window.setTimeout(() => setPaused(false), 1200);
+    if (axisLockRef.current !== "x") return;
+
+    event.preventDefault();
+
+    const dt = Math.max(event.timeStamp - lastTRef.current, 1);
+    velocityRef.current = (event.clientX - lastXRef.current) / dt;
+    lastXRef.current = event.clientX;
+    lastTRef.current = event.timeStamp;
+
+    const atStart = indexRef.current === 0 && dx > 0;
+    const atEnd = indexRef.current === slides.length - 1 && dx < 0;
+    const resistance = atStart || atEnd ? 0.35 : 1;
+    setOffset(dx * resistance);
+  };
+
+  const finishDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (pointerIdRef.current !== event.pointerId) return;
+    pointerIdRef.current = null;
+
+    const width = widthRef.current || 1;
+    const dx = offset;
+    const velocity = velocityRef.current;
+    const passed =
+      Math.abs(dx) > width * SWIPE_RATIO || Math.abs(velocity) > SWIPE_VELOCITY;
+
+    setDragging(false);
+
+    if (passed && axisLockRef.current === "x") {
+      if (dx < 0 || velocity < -SWIPE_VELOCITY) next();
+      else prev();
+    } else {
+      setOffset(0);
+    }
+
+    axisLockRef.current = null;
+    window.setTimeout(() => setPaused(false), 1400);
+  };
+
+  const trackStyle: CSSProperties = {
+    transform: `translate3d(calc(${-index * 100}% + ${offset}px), 0, 0)`,
+    transition: dragging ? "none" : "transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)",
   };
 
   return (
@@ -88,13 +162,7 @@ export function Carousel() {
           <p>Sit amet, consectetur adipiscing elit sed do eiusmod tempor.</p>
         </div>
 
-        <div
-          className="carousel"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-          onTouchCancel={onTouchEnd}
-        >
+        <div className="carousel">
           <button
             type="button"
             className="carousel__arrow carousel__arrow--prev"
@@ -104,23 +172,32 @@ export function Carousel() {
             ‹
           </button>
 
-          <div className="carousel__viewport">
-            {slides.map((slide, i) => (
-              <article
-                key={slide.title}
-                className="carousel__slide"
-                data-active={i === index}
-                aria-hidden={i !== index}
-              >
-                <div className="carousel__media">
-                  <img src={slide.image} alt={slide.title} draggable={false} />
-                </div>
-                <div className="carousel__body">
-                  <h3>{slide.title}</h3>
-                  <p>{slide.description}</p>
-                </div>
-              </article>
-            ))}
+          <div
+            ref={viewportRef}
+            className={`carousel__viewport${dragging ? " carousel__viewport--dragging" : ""}`}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={finishDrag}
+            onPointerCancel={finishDrag}
+          >
+            <div ref={trackRef} className="carousel__track" style={trackStyle}>
+              {slides.map((slide, i) => (
+                <article
+                  key={slide.title}
+                  className="carousel__slide"
+                  data-active={i === index}
+                  aria-hidden={i !== index}
+                >
+                  <div className="carousel__media">
+                    <img src={slide.image} alt={slide.title} draggable={false} />
+                  </div>
+                  <div className="carousel__body">
+                    <h3>{slide.title}</h3>
+                    <p>{slide.description}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
 
           <button
