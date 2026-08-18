@@ -5,6 +5,7 @@ import {
   useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
+  type TransitionEvent,
 } from "react";
 
 type Slide = {
@@ -31,18 +32,26 @@ const slides: Slide[] = [
   },
 ];
 
-const AUTO_PLAY_MS = 5000;
-const SWIPE_RATIO = 0.22;
-const SWIPE_VELOCITY = 0.35;
+const TOTAL = slides.length;
+/** [clone último, ...slides, clone primeiro] para loop infinito com slide */
+const trackSlides: Slide[] = [slides[TOTAL - 1], ...slides, slides[0]];
+
+const AUTO_PLAY_MS = 4800;
+const SLIDE_MS = 680;
+const SWIPE_RATIO = 0.18;
+const SWIPE_VELOCITY = 0.28;
+const EASE = "cubic-bezier(0.22, 0.82, 0.24, 1)";
 
 export function Carousel() {
-  const [index, setIndex] = useState(0);
+  /** posição no track estendido (1 = primeiro slide real) */
+  const [pos, setPos] = useState(1);
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const [noTransition, setNoTransition] = useState(false);
   const [paused, setPaused] = useState(false);
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
   const pointerIdRef = useRef<number | null>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
@@ -51,26 +60,86 @@ export function Carousel() {
   const velocityRef = useRef(0);
   const axisLockRef = useRef<"x" | "y" | null>(null);
   const widthRef = useRef(0);
-  const indexRef = useRef(0);
+  const posRef = useRef(1);
+  const animatingRef = useRef(false);
+  const resumeTimer = useRef<number | null>(null);
 
-  indexRef.current = index;
+  posRef.current = pos;
+  animatingRef.current = animating;
 
-  const goTo = useCallback((next: number) => {
-    setIndex(((next % slides.length) + slides.length) % slides.length);
+  const realIndex = ((pos - 1) % TOTAL + TOTAL) % TOTAL;
+
+  const clearResume = () => {
+    if (resumeTimer.current !== null) {
+      window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = null;
+    }
+  };
+
+  const scheduleResume = (ms = 1600) => {
+    clearResume();
+    resumeTimer.current = window.setTimeout(() => setPaused(false), ms);
+  };
+
+  const jumpTo = useCallback((nextPos: number) => {
+    setNoTransition(true);
+    setPos(nextPos);
     setOffset(0);
+    setAnimating(false);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setNoTransition(false));
+    });
   }, []);
 
-  const next = useCallback(() => goTo(indexRef.current + 1), [goTo]);
-  const prev = useCallback(() => goTo(indexRef.current - 1), [goTo]);
+  const slideTo = useCallback((nextPos: number) => {
+    if (animatingRef.current) return;
+    setOffset(0);
+    setAnimating(true);
+    setPos(nextPos);
+  }, []);
+
+  const next = useCallback(() => {
+    slideTo(posRef.current + 1);
+  }, [slideTo]);
+
+  const prev = useCallback(() => {
+    slideTo(posRef.current - 1);
+  }, [slideTo]);
+
+  const goToReal = useCallback(
+    (real: number) => {
+      const target = real + 1;
+      if (target === posRef.current) return;
+      slideTo(target);
+    },
+    [slideTo],
+  );
+
+  const onTrackTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.propertyName !== "transform") return;
+
+    setAnimating(false);
+    const current = posRef.current;
+
+    if (current >= TOTAL + 1) {
+      jumpTo(1);
+      return;
+    }
+    if (current <= 0) {
+      jumpTo(TOTAL);
+    }
+  };
 
   useEffect(() => {
-    if (paused || dragging) return;
+    if (paused || dragging || animating) return;
     const timer = window.setInterval(() => {
-      setIndex((current) => (current + 1) % slides.length);
-      setOffset(0);
+      next();
     }, AUTO_PLAY_MS);
     return () => window.clearInterval(timer);
-  }, [paused, dragging, index]);
+  }, [paused, dragging, animating, next, pos]);
+
+  useEffect(() => () => clearResume(), []);
 
   const measure = () => {
     widthRef.current = viewportRef.current?.clientWidth ?? 0;
@@ -78,6 +147,7 @@ export function Carousel() {
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (animatingRef.current) return;
 
     measure();
     pointerIdRef.current = event.pointerId;
@@ -87,9 +157,9 @@ export function Carousel() {
     lastTRef.current = event.timeStamp;
     velocityRef.current = 0;
     axisLockRef.current = null;
+    clearResume();
     setPaused(true);
     setDragging(true);
-
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -106,13 +176,12 @@ export function Carousel() {
         pointerIdRef.current = null;
         setDragging(false);
         setOffset(0);
-        window.setTimeout(() => setPaused(false), 400);
+        scheduleResume(400);
         return;
       }
     }
 
     if (axisLockRef.current !== "x") return;
-
     event.preventDefault();
 
     const dt = Math.max(event.timeStamp - lastTRef.current, 1);
@@ -120,9 +189,8 @@ export function Carousel() {
     lastXRef.current = event.clientX;
     lastTRef.current = event.timeStamp;
 
-    const atStart = indexRef.current === 0 && dx > 0;
-    const atEnd = indexRef.current === slides.length - 1 && dx < 0;
-    const resistance = atStart || atEnd ? 0.35 : 1;
+    // resistência elástica nas bordas do track estendido (quase nunca)
+    const resistance = 1;
     setOffset(dx * resistance);
   };
 
@@ -146,12 +214,15 @@ export function Carousel() {
     }
 
     axisLockRef.current = null;
-    window.setTimeout(() => setPaused(false), 1400);
+    scheduleResume(1800);
   };
 
   const trackStyle: CSSProperties = {
-    transform: `translate3d(calc(${-index * 100}% + ${offset}px), 0, 0)`,
-    transition: dragging ? "none" : "transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)",
+    transform: `translate3d(calc(${-pos * 100}% + ${offset}px), 0, 0)`,
+    transition:
+      dragging || noTransition
+        ? "none"
+        : `transform ${SLIDE_MS}ms ${EASE}`,
   };
 
   return (
@@ -166,7 +237,11 @@ export function Carousel() {
           <button
             type="button"
             className="carousel__arrow carousel__arrow--prev"
-            onClick={prev}
+            onClick={() => {
+              setPaused(true);
+              prev();
+              scheduleResume(1800);
+            }}
             aria-label="Anterior"
           >
             ‹
@@ -180,13 +255,17 @@ export function Carousel() {
             onPointerUp={finishDrag}
             onPointerCancel={finishDrag}
           >
-            <div ref={trackRef} className="carousel__track" style={trackStyle}>
-              {slides.map((slide, i) => (
+            <div
+              className="carousel__track"
+              style={trackStyle}
+              onTransitionEnd={onTrackTransitionEnd}
+            >
+              {trackSlides.map((slide, i) => (
                 <article
-                  key={slide.title}
+                  key={`${slide.title}-${i}`}
                   className="carousel__slide"
-                  data-active={i === index}
-                  aria-hidden={i !== index}
+                  data-active={i === pos}
+                  aria-hidden={i !== pos}
                 >
                   <div className="carousel__media">
                     <img src={slide.image} alt={slide.title} draggable={false} />
@@ -203,7 +282,11 @@ export function Carousel() {
           <button
             type="button"
             className="carousel__arrow carousel__arrow--next"
-            onClick={next}
+            onClick={() => {
+              setPaused(true);
+              next();
+              scheduleResume(1800);
+            }}
             aria-label="Próximo"
           >
             ›
@@ -215,13 +298,16 @@ export function Carousel() {
                 key={slide.title}
                 type="button"
                 className="carousel__dot"
-                data-active={i === index}
-                onClick={() => goTo(i)}
+                data-active={i === realIndex}
+                onClick={() => {
+                  setPaused(true);
+                  goToReal(i);
+                  scheduleResume(1800);
+                }}
                 aria-label={`Ir para ${slide.title}`}
               />
             ))}
           </div>
-
         </div>
       </div>
     </section>

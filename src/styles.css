@@ -371,6 +371,8 @@ img {
   display: flex;
   width: 100%;
   will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .carousel__slide {
@@ -380,6 +382,7 @@ img {
   display: grid;
   grid-template-columns: 1fr;
   background: var(--bg-elevated);
+  backface-visibility: hidden;
 }
 
 .carousel__media {
@@ -393,6 +396,16 @@ img {
   object-fit: cover;
   pointer-events: none;
   -webkit-user-drag: none;
+  transform: scale(1.02);
+  transition: transform 0.68s cubic-bezier(0.22, 0.82, 0.24, 1);
+}
+
+.carousel__slide[data-active="true"] .carousel__media img {
+  transform: scale(1);
+}
+
+.carousel__viewport--dragging .carousel__media img {
+  transition: none;
 }
 
 .carousel__body {
