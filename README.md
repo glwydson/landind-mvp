@@ -4,7 +4,7 @@
 
 Uma página institucional simples, visual e funcional, organizada em páginas separadas com navegação por rotas.
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 - **Página Inicial**
   - **Hero** — área de destaque com imagem de fundo, título, descrição e chamada para ação.
@@ -13,14 +13,14 @@ Uma página institucional simples, visual e funcional, organizada em páginas se
 - **Quem Sou Eu?** — página de apresentação pessoal com foto, formação acadêmica, experiência profissional e contatos (Instagram, WhatsApp e e-mail).
 - **Design responsivo** — tema claro adaptado a dispositivos móveis, tablets e desktops.
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 - [React](https://react.dev/) 18
 - [TypeScript](https://www.typescriptlang.org/) 5
 - [Vite](https://vitejs.dev/) 5
 - [React Router](https://reactrouter.com/) 7
 
-## 🚀 Começando
+## Começando
 
 ### Pré-requisitos
 
@@ -55,34 +55,6 @@ Abra `http://localhost:5173` no navegador.
 | `npm run build`   | Compila o TypeScript e gera o build em `dist/`             |
 | `npm run preview` | Serve o build de produção localmente para conferência      |
 
-## 📦 Deploy no GitHub Pages
-
-O projeto está configurado para funcionar em qualquer caminho do GitHub Pages (`base: "./"` no `vite.config.ts` e rotas com `HashRouter`).
-
-1. Envie o código para o GitHub:
-
-```bash
-git init
-git add .
-git commit -m "Versão inicial"
-git branch -M main
-git remote add origin https://github.com/USUARIO/landind-mvp.git
-git push -u origin main
-```
-
-2. Gere o build e publique a pasta `dist/` na branch `gh-pages`:
-
-```bash
-npm run build
-npx gh-pages -d dist
-```
-
-3. No GitHub, acesse **Settings → Pages** e configure a origem para a branch `gh-pages`.
-
-A aplicação ficará disponível em `https://USUARIO.github.io/landind-mvp/`.
-
-> O deploy também pode ser automatizado via GitHub Actions apontando para a pasta `dist`.
-
-## 📄 Licença
+## Licença
 
 Projeto de demonstração para fins de estudo e apresentação.
