@@ -396,7 +396,7 @@ img {
   object-fit: cover;
   pointer-events: none;
   -webkit-user-drag: none;
-  transform: scale(1.02);
+  transform: scale(1.015);
   transition: transform 1.7s cubic-bezier(0.33, 0.08, 0.18, 1);
 }
 
@@ -406,6 +406,23 @@ img {
 
 .carousel__viewport--dragging .carousel__media img {
   transition: none;
+}
+
+@media (max-width: 719px), (pointer: coarse) {
+  .carousel__media img {
+    transform: none;
+    transition: none;
+  }
+
+  .carousel__slide[data-active="true"] .carousel__media img {
+    transform: none;
+  }
+
+  .carousel__track {
+    /* suaviza o “salto” de pixels em GPUs móveis */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
 }
 
 .carousel__body {

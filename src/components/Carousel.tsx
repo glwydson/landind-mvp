@@ -38,29 +38,28 @@ const trackSlides: Slide[] = [slides[TOTAL - 1], ...slides, slides[0]];
 
 const AUTO_PLAY_MS = 6500;
 const SLIDE_MS_DESKTOP = 1700;
-const SLIDE_MS_MOBILE = 1700;
+const SLIDE_MS_MOBILE = 2400;
 const SWIPE_RATIO = 0.18;
 const SWIPE_VELOCITY = 0.28;
-const EASE = "cubic-bezier(0.33, 0.08, 0.18, 1)";
+const EASE_DESKTOP = "cubic-bezier(0.33, 0.08, 0.18, 1)";
+/** Curva mais longa e “flutuante” no touch — acelera pouco e desacelera bem */
+const EASE_MOBILE = "cubic-bezier(0.22, 0.02, 0.12, 1)";
 
-function useSlideDurationMs() {
-  const [ms, setMs] = useState(() => {
-    if (typeof window === "undefined") return SLIDE_MS_DESKTOP;
-    return window.matchMedia("(max-width: 719px), (pointer: coarse)").matches
-      ? SLIDE_MS_MOBILE
-      : SLIDE_MS_DESKTOP;
+function useIsTouchLayout() {
+  const [touch, setTouch] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 719px), (pointer: coarse)").matches;
   });
 
   useEffect(() => {
     const query = window.matchMedia("(max-width: 719px), (pointer: coarse)");
-    const update = () =>
-      setMs(query.matches ? SLIDE_MS_MOBILE : SLIDE_MS_DESKTOP);
+    const update = () => setTouch(query.matches);
     update();
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
 
-  return ms;
+  return touch;
 }
 
 export function Carousel() {
@@ -71,7 +70,9 @@ export function Carousel() {
   const [animating, setAnimating] = useState(false);
   const [noTransition, setNoTransition] = useState(false);
   const [paused, setPaused] = useState(false);
-  const slideMs = useSlideDurationMs();
+  const isTouchLayout = useIsTouchLayout();
+  const slideMs = isTouchLayout ? SLIDE_MS_MOBILE : SLIDE_MS_DESKTOP;
+  const slideEase = isTouchLayout ? EASE_MOBILE : EASE_DESKTOP;
 
 
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -243,7 +244,9 @@ export function Carousel() {
   const trackStyle: CSSProperties = {
     transform: `translate3d(calc(${-pos * 100}% + ${offset}px), 0, 0)`,
     transition:
-      dragging || noTransition ? "none" : `transform ${slideMs}ms ${EASE}`,
+      dragging || noTransition
+        ? "none"
+        : `transform ${slideMs}ms ${slideEase}`,
   };
 
   return (
